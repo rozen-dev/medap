@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clinical KB</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface2: #242424;
+    --border: #2e2e2e;
+    --text: #e8e6e1;
+    --muted: #7a7875;
+    --accent: #c8f07a;
+    --accent-dim: #8aab45;
+    --danger: #f07a7a;
+    --info: #7ab8f0;
+    --radius: 8px;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; min-height: 100vh; }
+  
+  header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: baseline; gap: 12px; }
+  header h1 { font-family: var(--mono); font-size: 14px; font-weight: 500; color: var(--accent); letter-spacing: 0.05em; }
+  header span { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+
+  .api-bar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 10px 1.5rem; display: flex; align-items: center; gap: 10px; }
+  .api-bar label { font-size: 12px; color: var(--muted); font-family: var(--mono); white-space: nowrap; }
+  .api-bar input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 6px 10px; font-size: 12px; font-family: var(--mono); color: var(--text); }
+  .api-bar input:focus { outline: none; border-color: var(--accent); }
+  .api-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
+  .api-dot.ok { background: var(--accent); }
+
+  nav { display: flex; border-bottom: 1px solid var(--border); padding: 0 1.5rem; }
+  nav button { background: none; border: none; color: var(--muted); font-family: var(--mono); font-size: 12px; padding: 12px 16px 10px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; letter-spacing: 0.04em; }
+  nav button.active { color: var(--accent); border-bottom-color: var(--accent); }
+  nav button:hover:not(.active) { color: var(--text); }
+
+  .screen { display: none; padding: 1.5rem; max-width: 680px; }
+  .screen.active { display: block; }
+
+  label.field-label { display: block; font-size: 11px; font-family: var(--mono); color: var(--muted); margin-bottom: 6px; letter-spacing: 0.06em; text-transform: uppercase; }
+  input[type=text], textarea { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; font-size: 14px; font-family: var(--sans); color: var(--text); }
+  input[type=text]:focus, textarea:focus { outline: none; border-color: var(--accent); }
+  textarea { min-height: 130px; resize: vertical; line-height: 1.6; }
+  .field { margin-bottom: 14px; }
+
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-size: 13px; font-family: var(--mono); cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn.primary { background: var(--accent); color: #0f0f0f; border-color: var(--accent); font-weight: 500; }
+  .btn.primary:hover { background: var(--accent-dim); border-color: var(--accent-dim); color: #0f0f0f; }
+  .btn.primary:disabled { opacity: 0.4; }
+
+  .status { font-size: 12px; font-family: var(--mono); margin-top: 10px; min-height: 18px; color: var(--muted); }
+  .status.error { color: var(--danger); }
+  .status.ok { color: var(--accent); }
+
+  .spinner { display: inline-block; width: 10px; height: 10px; border: 1.5px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .filter-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1rem; }
+  .pill { font-size: 11px; font-family: var(--mono); padding: 4px 10px; border-radius: 99px; border: 1px solid var(--border); background: none; color: var(--muted); cursor: pointer; }
+  .pill.active { border-color: var(--accent); color: var(--accent); }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 10px; }
+  .card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2px; }
+  .card-title { font-size: 14px; font-weight: 500; color: var(--text); }
+  .card-meta { font-size: 11px; font-family: var(--mono); color: var(--muted); margin-bottom: 10px; }
+  .badge { font-size: 10px; font-family: var(--mono); padding: 2px 7px; border-radius: 99px; border: 1px solid var(--border); color: var(--info); border-color: var(--info); margin-left: 8px; opacity: 0.8; }
+  .del { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; padding: 0 2px; line-height: 1; }
+  .del:hover { color: var(--danger); }
+
+  .principles { list-style: none; padding: 0; margin-bottom: 12px; }
+  .principles li { font-size: 13px; line-height: 1.6; color: var(--text); padding: 6px 0 6px 14px; border-left: 2px solid var(--accent); margin-bottom: 6px; }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
+  .q-label { font-size: 10px; font-family: var(--mono); color: var(--muted); margin-bottom: 8px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .question { font-size: 13px; color: var(--text); padding: 8px 10px; border-radius: var(--radius); background: var(--surface2); margin-bottom: 5px; cursor: pointer; line-height: 1.5; border: 1px solid transparent; }
+  .question:hover { border-color: var(--border); }
+  .answer { display: none; font-size: 13px; color: var(--muted); padding: 8px 10px 6px; line-height: 1.6; border-left: 2px solid var(--border); margin-bottom: 8px; }
+  .answer.show { display: block; }
+
+  .empty { text-align: center; padding: 3rem 0; font-size: 13px; font-family: var(--mono); color: var(--muted); }
+
+  .quiz-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 10px; }
+  .quiz-topic { font-size: 11px; font-family: var(--mono); color: var(--muted); margin-bottom: 6px; }
+  .quiz-q { font-size: 15px; font-weight: 500; line-height: 1.5; margin-bottom: 14px; }
+  .reveal { padding: 7px 14px; border-radius: var(--radius); border: 1px solid var(--border); background: none; color: var(--muted); font-size: 12px; font-family: var(--mono); cursor: pointer; }
+  .reveal:hover { border-color: var(--accent); color: var(--accent); }
+  .quiz-ans { display: none; margin-top: 12px; font-size: 14px; color: var(--muted); line-height: 1.6; padding-top: 12px; border-top: 1px solid var(--border); }
+  .quiz-ans.show { display: block; }
+
+  .count { font-size: 12px; font-family: var(--mono); color: var(--muted); }
+  .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>CLINICAL_KB</h1>
+  <span>ward → brain pipeline</span>
+</header>
+
+<div class="api-bar">
+  <label>API KEY</label>
+  <input type="password" id="api-key" placeholder="sk-ant-..." oninput="checkKey()" />
+  <div class="api-dot" id="api-dot"></div>
+</div>
+
+<nav>
+  <button class="active" onclick="show('capture')">CAPTURE</button>
+  <button onclick="show('review')">REVIEW</button>
+  <button onclick="show('quiz')">QUIZ</button>
+</nav>
+
+<div id="screen-capture" class="screen active">
+  <div class="field">
+    <label class="field-label">Topic / condition</label>
+    <input type="text" id="topic" placeholder="e.g. PE, AKI, VT, sepsis..." />
+  </div>
+  <div class="field">
+    <label class="field-label">Your notes — rough is fine</label>
+    <textarea id="notes" placeholder="Type, paste, or dictate what you saw. A few sentences is enough."></textarea>
+  </div>
+  <div class="row">
+    <button class="btn primary" id="process-btn" onclick="process()">Extract principles</button>
+  </div>
+  <div class="status" id="status"></div>
+</div>
+
+<div id="screen-review" class="screen">
+  <div class="filter-row" id="filter-row"></div>
+  <div id="cards"></div>
+</div>
+
+<div id="screen-quiz" class="screen">
+  <div class="row" style="margin-bottom:1rem;">
+    <button class="btn" onclick="renderQuiz()">Shuffle</button>
+    <span class="count" id="quiz-count"></span>
+  </div>
+  <div id="quiz-area"></div>
+</div>
+
+<script>
+const KEY = 'ckb_entries_v1';
+let entries = [];
+
+function load() {
+  try { entries = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch(e) { entries = []; }
+  const savedKey = localStorage.getItem('ckb_apikey');
+  if (savedKey) { document.getElementById('api-key').value = savedKey; checkKey(); }
+}
+function save() { localStorage.setItem(KEY, JSON.stringify(entries)); }
+function checkKey() {
+  const k = document.getElementById('api-key').value.trim();
+  document.getElementById('api-dot').className = 'api-dot' + (k.startsWith('sk-ant-') ? ' ok' : '');
+  if (k.startsWith('sk-ant-')) localStorage.setItem('ckb_apikey', k);
+}
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  document.querySelectorAll('nav button').forEach((b, i) => b.classList.toggle('active', ['capture','review','quiz'][i] === id));
+  if (id === 'review') renderReview();
+  if (id === 'quiz') renderQuiz();
+}
+function setStatus(msg, type) {
+  const el = document.getElementById('status');
+  el.innerHTML = msg;
+  el.className = 'status' + (type ? ' ' + type : '');
+}
+
+async function process() {
+  const apiKey = document.getElementById('api-key').value.trim();
+  const topic = document.getElementById('topic').value.trim();
+  const notes = document.getElementById('notes').value.trim();
+  if (!apiKey) { setStatus('Add your API key above first.', 'error'); return; }
+  if (!notes) { setStatus('Add some notes first.', 'error'); return; }
+
+  const btn = document.getElementById('process-btn');
+  btn.disabled = true;
+  setStatus('<span class="spinner"></span> Extracting principles...');
+
+  const prompt = `You are a clinical medical educator helping a medical student on placement retain ward learning. Given these notes, identify 2-3 (no more) core clinical principles the student must know. Write one question per principle with a concise answer.
+
+Topic: ${topic || 'not specified'}
+Notes: ${notes}
+
+Reply ONLY with raw JSON, no markdown, no backticks:
+{"topic":"short topic name","system":"one of: Respiratory, Cardiology, Renal, Neurology, GI, Haematology, Infectious Disease, Endocrine, Psychiatry, Other","principles":[{"point":"core principle, one clear sentence"},{"point":"second principle"}],"qna":[{"q":"question testing first principle","a":"answer 2-3 sentences"},{"q":"question testing second principle","a":"answer 2-3 sentences"}]}`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!resp.ok) {
+      const e = await resp.json().catch(() => ({}));
+      throw new Error(e.error?.message || 'API error ' + resp.status);
+    }
+
+    const data = await resp.json();
+    const raw = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('').trim();
+    let parsed;
+    try { parsed = JSON.parse(raw); }
+    catch(e) { const m = raw.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error('Bad response format'); }
+
+    const entry = {
+      id: Date.now(),
+      topic: parsed.topic || topic || 'Untitled',
+      system: parsed.system || 'Other',
+      principles: (parsed.principles || []).filter(p => p?.point),
+      qna: parsed.qna || [],
+      date: new Date().toLocaleDateString('en-NZ', { day: 'numeric', month: 'short' })
+    };
+    entries.unshift(entry);
+    save();
+    document.getElementById('notes').value = '';
+    document.getElementById('topic').value = '';
+    btn.disabled = false;
+    setStatus('Saved — ' + entry.topic, 'ok');
+    setTimeout(() => show('review'), 800);
+
+  } catch(e) {
+    setStatus('Error: ' + e.message, 'error');
+    btn.disabled = false;
+  }
+}
+
+function renderReview() {
+  const systems = [...new Set(entries.map(e => e.system))];
+  const fr = document.getElementById('filter-row');
+  fr.innerHTML = `<button class="pill active" onclick="filterCards('all')">all</button>`;
+  systems.forEach(s => fr.innerHTML += `<button class="pill" onclick="filterCards('${s}')">${s.toLowerCase()}</button>`);
+  renderCards('all');
+}
+
+function filterCards(f) {
+  document.querySelectorAll('.pill').forEach(p => p.classList.toggle('active', (f==='all'&&p.textContent==='all')||p.textContent===f.toLowerCase()));
+  renderCards(f);
+}
+
+function renderCards(f) {
+  const c = document.getElementById('cards');
+  const show = f==='all' ? entries : entries.filter(e => e.system===f);
+  if (!show.length) { c.innerHTML = '<div class="empty">nothing here yet</div>'; return; }
+  c.innerHTML = show.map(e => `
+    <div class="card">
+      <div class="card-top">
+        <span class="card-title">${e.topic}<span class="badge">${e.system}</span></span>
+        <button class="del" onclick="del(${e.id})" aria-label="Delete">&#x2715;</button>
+      </div>
+      <div class="card-meta">${e.date}</div>
+      <ul class="principles">
+        ${e.principles.map(p => `<li>${p.point}</li>`).join('')}
+      </ul>
+      <hr class="divider">
+      <div class="q-label">tap to reveal</div>
+      ${e.qna.map(qa => `
+        <div class="question" onclick="this.nextElementSibling.classList.toggle('show')">${qa.q}</div>
+        <div class="answer">${qa.a}</div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function del(id) {
+  entries = entries.filter(e => e.id !== id);
+  save();
+  renderReview();
+}
+
+function renderQuiz() {
+  const all = entries.flatMap(e => e.qna.map(qa => ({...qa, topic: e.topic})));
+  document.getElementById('quiz-count').textContent = all.length ? all.length + ' question' + (all.length!==1?'s':'') : '';
+  if (!all.length) { document.getElementById('quiz-area').innerHTML = '<div class="empty">no questions yet</div>'; return; }
+  const shuffled = [...all].sort(() => Math.random() - 0.5);
+  document.getElementById('quiz-area').innerHTML = shuffled.map(qa => `
+    <div class="quiz-card">
+      <div class="quiz-topic">${qa.topic}</div>
+      <div class="quiz-q">${qa.q}</div>
+      <button class="reveal" onclick="this.nextElementSibling.classList.add('show');this.style.display='none'">reveal answer</button>
+      <div class="quiz-ans">${qa.a}</div>
+    </div>
+  `).join('');
+}
+
+load();
+</script>
+</body>
+</html>
